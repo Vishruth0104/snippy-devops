@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         SONAR_TOKEN = credentials('sonar-token') // Jenkins Secret Text Credential
+        SONAR_SCANNER_DIR = 'sonar-scanner-5.0.1.3006-linux'
     }
 
     stages {
@@ -21,6 +22,7 @@ pipeline {
             steps {
                 sh '''
                     . venv/bin/activate
+                    pip install pytest
                     pytest backend/tests/
                 '''
             }
@@ -29,9 +31,13 @@ pipeline {
         stage('Code Quality') {
             steps {
                 sh '''
-                    wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
-                    unzip sonar-scanner-cli-5.0.1.3006-linux.zip
-                    sonar-scanner-5.0.1.3006-linux/bin/sonar-scanner \
+                    if [ ! -d "$SONAR_SCANNER_DIR" ]; then
+                        echo "📦 Downloading sonar-scanner..."
+                        wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/${SONAR_SCANNER_DIR}.zip
+                        unzip ${SONAR_SCANNER_DIR}.zip
+                    fi
+                    echo "🚀 Running sonar-scanner..."
+                    ${SONAR_SCANNER_DIR}/bin/sonar-scanner \
                         -Dsonar.projectKey=Vishruth0104_snippy-devops \
                         -Dsonar.organization=vishruth0104 \
                         -Dsonar.sources=backend \
