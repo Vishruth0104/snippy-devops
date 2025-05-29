@@ -2,24 +2,25 @@ pipeline {
     agent any
 
     environment {
-        SONAR_TOKEN = credentials('sonar-token')
-        PYTHON_ENV = 'venv'
+        SONAR_TOKEN = credentials('sonar-token') // 👈 Add this in Jenkins > Manage Credentials
+        PATH = "/opt/homebrew/bin:$PATH"         // 👈 Ensure sonar-scanner from Homebrew is accessible
     }
 
     stages {
         stage('Build') {
             steps {
+                echo "📦 Creating virtual environment and installing dependencies..."
                 sh '''
                     python3 -m venv venv
-                    . venv/bin/activate
-                    pip install --upgrade pip
-                    pip install -r backend/requirements.txt
+                    . venv/bin/activate && pip install --upgrade pip
+                    . venv/bin/activate && pip install -r backend/requirements.txt
                 '''
             }
         }
 
         stage('Test') {
             steps {
+                echo "🧪 Running tests with pytest..."
                 sh '''
                     . venv/bin/activate
                     pip install pytest
@@ -30,6 +31,7 @@ pipeline {
 
         stage('Code Quality') {
             steps {
+                echo "🔍 Running SonarCloud analysis..."
                 sh '''
                     sonar-scanner \
                       -Dsonar.projectKey=Vishruth0104_snippy-devops \
@@ -42,27 +44,15 @@ pipeline {
             }
         }
 
-        stage('Security Scan') {
-            steps {
-                echo '🔒 Running security scans (placeholder)'
-                // Example: run safety or bandit here
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                echo '🚀 Deploying application (placeholder)'
-                // Add deploy commands here
-            }
-        }
+        // Optional: Add more stages like 'Security Scan' or 'Deploy'
     }
 
     post {
         success {
-            echo '✅ Build completed successfully!'
+            echo '✅ Pipeline completed successfully!'
         }
         failure {
-            echo '❌ Build failed. Check logs for details.'
+            echo '❌ Pipeline failed. Check the logs above.'
         }
     }
 }
